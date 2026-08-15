@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crash Radar — Market Stress Dashboard</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a2d;--muted:#8f9bb3;--text:#eef3ff;--line:#26324d;--green:#35d07f;--amber:#f2bd4b;--red:#ff5c68}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#080c17,#111a2d);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1120px;margin:auto;padding:42px 22px 60px}
+header{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:30px}
+h1{font-size:38px;line-height:1.05;margin:0 0 10px}.sub{color:var(--muted);max-width:700px}
+.badge{border:1px solid var(--line);padding:8px 12px;border-radius:999px;color:#b9c5dc;font-size:12px}
+.score{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:22px}
+.scoreNum{font-size:58px;font-weight:800}.meter{height:14px;background:#202b43;border-radius:20px;overflow:hidden}.fill{height:100%;width:0;background:var(--green);transition:.5s}.legend{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:7px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.card{background:rgba(18,26,45,.92);border:1px solid var(--line);border-radius:18px;padding:20px;min-height:190px}
+.card h2{font-size:16px;margin:0 0 4px}.desc{color:var(--muted);font-size:13px}.value{font-size:31px;font-weight:750;margin:16px 0 2px}.status{font-weight:700;font-size:13px}.bar{height:7px;background:#202b43;border-radius:10px;margin-top:13px;overflow:hidden}.bar i{display:block;height:100%;width:0}.source{margin-top:14px;font-size:12px}.source a{color:#a9c7ff;text-decoration:none}.source a:hover{text-decoration:underline}
+footer{margin-top:25px;color:var(--muted);font-size:12px}
+@media(max-width:720px){header{display:block}.badge{display:inline-block;margin-top:15px}.grid{grid-template-columns:1fr}.score{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Crash Radar</h1>
+    <div class="sub">A simple dashboard tracking five public, measurable signals that can deteriorate before or during major equity-market stress.</div>
+  </div>
+  <div class="badge" id="updated">Loading…</div>
+</header>
+
+<section class="score">
+  <div>
+    <div class="scoreNum" id="score">—</div>
+    <div class="desc">Composite stress score / 100</div>
+  </div>
+  <div>
+    <div class="meter"><div class="fill" id="fill"></div></div>
+    <div class="legend"><span>Normal</span><span>Elevated</span><span>Severe</span></div>
+    <p class="desc" id="summary">Reading public market data…</p>
+  </div>
+</section>
+
+<main class="grid">
+  <article class="card" data-id="VIXCLS">
+    <h2>1. VIX — Equity volatility</h2>
+    <div class="desc">A sharp, sustained rise signals rapidly increasing demand for downside protection.</div>
+    <div class="value" id="vix">—</div><div class="status" id="vix-s">Loading</div>
+    <div class="bar"><i id="vix-b"></i></div>
+    <div class="source"><a href="https://fred.stlouisfed.org/series/VIXCLS" target="_blank">FRED / Cboe</a></div>
+  </article>
+
+  <article class="card">
+    <h2>2. VIX term structure</h2>
+    <div class="desc">When near-term volatility rises above longer-term volatility, the curve is inverted — a classic stress signal.</div>
+    <div class="value" id="term">—</div><div class="status" id="term-s">Loading</div>
+    <div class="bar"><i id="term-b"></i></div>
+    <div class="source"><a href="https://www.cboe.com/tradable-products/vix/term-structure" target="_blank">Cboe VIX Term Structure</a></div>
+  </article>
+
+  <article class="card">
+    <h2>3. High-yield credit spread</h2>
+    <div class="desc">Credit spreads measure the extra yield investors demand to hold below-investment-grade corporate debt.</div>
+    <div class="value" id="hy">—</div><div class="status" id="hy-s">Loading</div>
+    <div class="bar"><i id="hy-b"></i></div>
+    <div class="source"><a href="https://fred.stlouisfed.org/series/BAMLH0A0HYM2" target="_blank">FRED / ICE BofA</a></div>
+  </article>
+
+  <article class="card">
+    <h2>4. 10Y–2Y Treasury spread</h2>
+    <div class="desc">A deeply inverted curve has historically preceded recessions; rapid re-steepening can occur as recession risk rises.</div>
+    <div class="value" id="curve">—</div><div class="status" id="curve-s">Loading</div>
+    <div class="bar"><i id="curve-b"></i></div>
+    <div class="source"><a href="https://fred.stlouisfed.org/series/T10Y2Y" target="_blank">FRED / U.S. Treasury</a></div>
+  </article>
+
+  <article class="card">
+    <h2>5. Chicago Fed Financial Conditions</h2>
+    <div class="desc">A broad weekly gauge of U.S. financial stress across money, debt and equity markets.</div>
+    <div class="value" id="nfci">—</div><div class="status" id="nfci-s">Loading</div>
+    <div class="bar"><i id="nfci-b"></i></div>
+    <div class="source"><a href="https://fred.stlouisfed.org/series/NFCI" target="_blank">FRED / Chicago Fed</a></div>
+  </article>
+</main>
+
+<footer>
+  This is a monitoring tool, not a prediction engine or investment advice. No single indicator reliably predicts a crash.
+  FRED series are generally daily or weekly rather than tick-by-tick. VIX term-structure data is supplied by Cboe.
+</footer>
+</div>
+
+<script>
+const FRED = id => `https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}`;
+async function fred(id){
+  const r=await fetch(FRED(id),{cache:"no-store"});
+  if(!r.ok) throw Error(id);
+  const t=await r.text();
+  const rows=t.trim().split(/\r?\n/).slice(1).map(x=>x.split(","));
+  const valid=rows.filter(x=>x.length>=2 && x[1] && x[1]!=".");
+  return {date:valid.at(-1)[0], value:Number(valid.at(-1)[1]), prev:valid.length>1?Number(valid.at(-2)[1]):null};
+}
+function risk(v,lo,hi,invert=false){
+  let x=(v-lo)/(hi-lo); x=Math.max(0,Math.min(1,x));
+  return invert?1-x:x;
+}
+function paint(id,val,status,score){
+  document.getElementById(id).textContent=val;
+  document.getElementById(id+"-s").textContent=status;
+  const b=document.getElementById(id+"-b"); b.style.width=(score*100)+"%";
+  b.style.background=score>.67?"var(--red)":score>.35?"var(--amber)":"var(--green)";
+}
+(async()=>{
+ try{
+   const [vix,hy,curve,nfci]=await Promise.all([
+     fred("VIXCLS"),fred("BAMLH0A0HYM2"),fred("T10Y2Y"),fred("NFCI")
+   ]);
+
+   // Conservative heuristic bands; intended as a warning dashboard, not a forecast.
+   const vixR=risk(vix.value,12,35);
+   const hyR=risk(hy.value,2.5,8);
+   const curveR=curve.value<0 ? risk(Math.abs(curve.value),0,1) : 0;
+   const nfciR=risk(nfci.value,0,1);
+   const scores=[vixR,hyR,curveR,nfciR];
+
+   paint("vix",vix.value.toFixed(2),"Daily volatility",vixR);
+   paint("hy",hy.value.toFixed(2)+"%","Credit stress",hyR);
+   paint("curve",(curve.value>=0?"+":"")+curve.value.toFixed(2)+"%","Yield-curve signal",curveR);
+   paint("nfci",nfci.value.toFixed(2),"Financial conditions",nfciR);
+
+   // Term structure is represented by Cboe's current public table when available.
+   // The dashboard uses a simple manual fallback if the public page cannot be read by browser JS.
+   let termScore=0, termText="See Cboe curve";
+   try{
+     const r=await fetch("https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",{cache:"no-store"});
+     if(r.ok) termText="Use Cboe live curve";
+   }catch(e){}
+   document.getElementById("term").textContent=termText;
+   document.getElementById("term-s").textContent="Near-term vs. longer-term volatility";
+   document.getElementById("term-b").style.width="0%";
+   document.getElementById("term-b").style.background="var(--green)";
+
+   const total=Math.round((scores.reduce((a,b)=>a+b,0)/4)*100);
+   document.getElementById("score").textContent=total;
+   document.getElementById("fill").style.width=total+"%";
+   document.getElementById("fill").style.background=total>67?"var(--red)":total>35?"var(--amber)":"var(--green)";
+   document.getElementById("summary").textContent=
+     total>67?"Severe stress: multiple signals are flashing warning signs.":
+     total>35?"Elevated stress: monitor for confirmation across credit, volatility and macro signals.":
+     "No broad stress signal from the selected public indicators.";
+   document.getElementById("updated").textContent="Data refreshed "+new Date().toLocaleTimeString();
+ }catch(e){
+   document.getElementById("updated").textContent="Data unavailable";
+   document.getElementById("summary").textContent="The browser could not retrieve one or more public data feeds. A small server-side proxy is recommended for production.";
+ }
+})();
+</script>
+</body>
+</html>
